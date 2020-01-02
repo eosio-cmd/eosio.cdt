@@ -213,8 +213,10 @@ inline key_type make_key(eosio::name n) {
    return make_key(n.value);
 }
 
-template<typename T, uint64_t db = eosio::name{"eosio.kvram"}.value>
+template<typename T, eosio::name::raw DbName = eosio::name{"eosio.kvram"}>
 class kv_table {
+
+   constexpr static uint64_t db = static_cast<uint64_t>(DbName);
 
    enum class kv_it_stat {
       iterator_ok     = 0,  // Iterator is positioned at a key-value pair
