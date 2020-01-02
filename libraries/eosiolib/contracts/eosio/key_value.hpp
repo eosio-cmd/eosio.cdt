@@ -61,11 +61,11 @@ struct key_type {
    size_t size;
    std::string buffer;
 
-   bool operator==(key_type k){
-      return size == k.size && buffer == k.buffer;
+   bool operator==(const key_type& k) const {
+      return std::tie(size, buffer) == std::tie(k.size, k.buffer);
    }
-   bool operator!=(key_type k){
-      return !(size == k.size && buffer == k.buffer);
+   bool operator!=(const key_type& k) const {
+      return !(*this == k);
    }
 };
 
