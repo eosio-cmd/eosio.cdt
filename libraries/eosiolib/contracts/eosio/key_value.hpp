@@ -69,7 +69,7 @@ struct key_type {
    }
 };
 
-namespace _key_value_detail {
+namespace detail {
    constexpr static size_t max_stack_buffer_size = 512;
 }
 
@@ -109,7 +109,7 @@ inline T swap_endian(T u) {
 }
 
 inline key_type make_prefix(eosio::name table_name, eosio::name index_name, uint8_t status = 1) {
-   using namespace _key_value_detail;
+   using namespace detail;
 
    auto bige_table = swap_endian<uint64_t>(table_name.value);
    auto bige_index = swap_endian<uint64_t>(index_name.value);
@@ -117,7 +117,7 @@ inline key_type make_prefix(eosio::name table_name, eosio::name index_name, uint
    size_t size_64 = sizeof(index_name);
 
    size_t buffer_size = (2 * size_64) + sizeof(status);
-   void* buffer = buffer_size > _key_value_detail::max_stack_buffer_size ? malloc(buffer_size) : alloca(buffer_size);
+   void* buffer = buffer_size > detail::max_stack_buffer_size ? malloc(buffer_size) : alloca(buffer_size);
 
    memcpy(buffer, &status, sizeof(status));
    memcpy(((char*)buffer) + sizeof(status), &bige_table, size_64);
@@ -125,7 +125,7 @@ inline key_type make_prefix(eosio::name table_name, eosio::name index_name, uint
 
    std::string s((char*)buffer, buffer_size);
 
-   if (buffer_size > _key_value_detail::max_stack_buffer_size) {
+   if (buffer_size > detail::max_stack_buffer_size) {
       free(buffer);
    }
 
@@ -133,17 +133,17 @@ inline key_type make_prefix(eosio::name table_name, eosio::name index_name, uint
 }
 
 inline key_type table_key(key_type prefix, key_type key) {
-   using namespace _key_value_detail;
+   using namespace detail;
 
    size_t buffer_size = key.size + prefix.size;
-   void* buffer = buffer_size > _key_value_detail::max_stack_buffer_size ? malloc(buffer_size) : alloca(buffer_size);
+   void* buffer = buffer_size > detail::max_stack_buffer_size ? malloc(buffer_size) : alloca(buffer_size);
 
    memcpy(buffer, prefix.buffer.data(), prefix.size);
    memcpy(((char*)buffer) + prefix.size, key.buffer.data(), key.size);
 
    std::string s((char*)buffer, buffer_size);
 
-   if (buffer_size > _key_value_detail::max_stack_buffer_size) {
+   if (buffer_size > detail::max_stack_buffer_size) {
       free(buffer);
    }
 
@@ -158,7 +158,7 @@ inline I flip_msb(I val) {
 
 template <typename I>
 inline key_type make_key(I val) {
-   using namespace _key_value_detail;
+   using namespace detail;
 
    if (std::is_signed<I>::value) {
       val = flip_msb(val);
@@ -167,28 +167,28 @@ inline key_type make_key(I val) {
    auto big_endian = swap_endian<I>(val);
 
    size_t data_size = pack_size(big_endian);
-   void* data_buffer = data_size > _key_value_detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
+   void* data_buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
 
    datastream<char*> data_ds((char*)data_buffer, data_size);
    data_ds << big_endian;
 
    std::string s((char*)data_buffer, data_size);
 
-   if (data_size > _key_value_detail::max_stack_buffer_size) {
+   if (data_size > detail::max_stack_buffer_size) {
       free(data_buffer);
    }
    return {data_size, s};
 }
 
 inline key_type make_key(std::string val, bool case_insensitive=false) {
-   using namespace _key_value_detail;
+   using namespace detail;
 
    if (case_insensitive) {
       std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) -> unsigned char { return std::toupper(c); });
    }
 
    size_t data_size = pack_size(val) + 3;
-   void* data_buffer = data_size > _key_value_detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
+   void* data_buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
 
    datastream<char*> data_ds((char*)data_buffer, data_size);
    data_ds << val;
@@ -199,7 +199,7 @@ inline key_type make_key(std::string val, bool case_insensitive=false) {
 
    std::string s((char*)data_buffer, data_size);
 
-   if (data_size > _key_value_detail::max_stack_buffer_size) {
+   if (data_size > detail::max_stack_buffer_size) {
       free(data_buffer);
    }
    return {data_size, s};
@@ -230,7 +230,7 @@ public:
                   contract_name{contract_name}, itr{itr}, itr_stat{itr_stat}, data_size{data_size}, idx{idx} {}
 
          T value() {
-            using namespace _key_value_detail;
+            using namespace detail;
 
             eosio::check(itr_stat != kv_it_stat::iterator_end, "Cannot read end iterator");
             eosio::check(data_size > 0, "Cannot read a value of size 0");
@@ -238,7 +238,7 @@ public:
             uint32_t actual_value_size;
             uint32_t offset = 0;
 
-            void* buffer = data_size > _key_value_detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
+            void* buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
             auto stat = internal_use_do_not_use::kv_it_value(itr, offset, (char*)buffer, data_size, actual_value_size);
 
             eosio::check(static_cast<kv_it_stat>(stat) != kv_it_stat::iterator_end, "Error reading value");
@@ -248,7 +248,7 @@ public:
 
                T val;
                ds >> val;
-               if (data_size > _key_value_detail::max_stack_buffer_size) {
+               if (data_size > detail::max_stack_buffer_size) {
                   free(buffer);
                }
                return val;
@@ -257,7 +257,7 @@ public:
                auto success = internal_use_do_not_use::kv_get(db, contract_name.value, (const char*)buffer, actual_value_size, actual_data_size);
                eosio::check(success, "failure getting primary key");
 
-               void* pk_buffer = actual_data_size > _key_value_detail::max_stack_buffer_size ? malloc(actual_data_size) : alloca(actual_data_size);
+               void* pk_buffer = actual_data_size > detail::max_stack_buffer_size ? malloc(actual_data_size) : alloca(actual_data_size);
                auto copy_size = internal_use_do_not_use::kv_get_data(db, 0, (char*)pk_buffer, actual_data_size);
 
                eosio::check(copy_size > 0, "failure getting primary index data");
@@ -267,10 +267,10 @@ public:
                T val;
                ds >> val;
 
-               if (actual_data_size > _key_value_detail::max_stack_buffer_size) {
+               if (actual_data_size > detail::max_stack_buffer_size) {
                   free(pk_buffer);
                }
-               if (data_size > _key_value_detail::max_stack_buffer_size) {
+               if (data_size > detail::max_stack_buffer_size) {
                   free(buffer);
                }
                return val;
@@ -377,7 +377,7 @@ public:
       }
 
       iterator begin() {
-         using namespace _key_value_detail;
+         using namespace detail;
 
          auto prefix = make_prefix(table_name, name);
          uint32_t itr = internal_use_do_not_use::kv_it_create(db, contract_name.value, prefix.buffer.data(), prefix.size);
@@ -385,10 +385,10 @@ public:
 
          uint32_t value_size;
          uint64_t buffer_size = 1024*1024; // TODO:
-         void* buffer = buffer_size > _key_value_detail::max_stack_buffer_size ? malloc(buffer_size) : alloca(buffer_size);
+         void* buffer = buffer_size > detail::max_stack_buffer_size ? malloc(buffer_size) : alloca(buffer_size);
          internal_use_do_not_use::kv_it_value(itr, 0, (char*)buffer, buffer_size, value_size);
 
-         if (buffer_size > _key_value_detail::max_stack_buffer_size) {
+         if (buffer_size > detail::max_stack_buffer_size) {
             free(buffer);
          }
 
@@ -465,12 +465,12 @@ public:
    }
 
    void upsert(T value) {
-      using namespace _key_value_detail;
+      using namespace detail;
 
       auto t_key = table_key(make_prefix(table_name, primary_index->name), value.primary_key());
 
       size_t data_size = pack_size(value);
-      void* data_buffer = data_size > _key_value_detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
+      void* data_buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
       datastream<char*> data_ds((char*)data_buffer, data_size);
       data_ds << value;
 
@@ -481,7 +481,7 @@ public:
          internal_use_do_not_use::kv_set(db, contract_name.value, st_key.buffer.data(), st_key.size, t_key.buffer.data(), t_key.size);
       }
       
-      if (data_size > _key_value_detail::max_stack_buffer_size) {
+      if (data_size > detail::max_stack_buffer_size) {
          free(data_buffer);
       }
    }
