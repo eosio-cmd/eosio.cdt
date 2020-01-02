@@ -76,7 +76,6 @@ namespace detail {
 /*
 Key transformations
 The key-value store could provide a lexicographical ordering of uint8_t on the keys. The contract can create an ordering on top by transforming its keys. Example transforms:
-
    [x] - uint?_t: Convert to big-endian
    [x] - int?_t: Invert the MSB then convert to big-endian
    [x] - strings: Convert 0x00 to (0x00, 0x01). Append (0x00, 0x00) to the end. This transform allows arbitrary-length strings.
@@ -132,7 +131,7 @@ inline key_type make_prefix(eosio::name table_name, eosio::name index_name, uint
    return {buffer_size, s};
 }
 
-inline key_type table_key(key_type prefix, key_type key) {
+inline key_type table_key(const key_type& prefix, const key_type& key) {
    using namespace detail;
 
    size_t buffer_size = key.size + prefix.size;
@@ -231,7 +230,7 @@ public:
          iterator(eosio::name contract_name, uint32_t itr, kv_it_stat itr_stat, size_t data_size, index* idx) :
                   contract_name{contract_name}, itr{itr}, itr_stat{itr_stat}, data_size{data_size}, idx{idx} {}
 
-         T value() {
+         T value() const {
             using namespace detail;
 
             eosio::check(itr_stat != kv_it_stat::iterator_end, "Cannot read end iterator");
@@ -303,7 +302,7 @@ public:
             return copy;
          }
 
-         bool operator==(iterator b) {
+         bool operator==(const iterator& b) const {
             if (itr_stat == kv_it_stat::iterator_end) {
                return b.itr_stat == kv_it_stat::iterator_end;
             }
@@ -325,14 +324,14 @@ public:
 
       private:
          eosio::name contract_name;
-         index* idx;
+         const index* idx;
 
          size_t data_size;
 
          uint32_t itr;
          kv_it_stat itr_stat;
 
-         key_type key() {
+         key_type key() const {
             return idx->get_key(value());
          }
       };
@@ -425,7 +424,7 @@ public:
          return return_values;
       }
 
-      key_type get_key(T t) {
+      key_type get_key(T t) const {
          return (t.*key_function)(); 
       }
 
@@ -466,7 +465,7 @@ public:
       }
    }
 
-   void upsert(T value) {
+   void upsert(const T& value) {
       using namespace detail;
 
       auto t_key = table_key(make_prefix(table_name, primary_index->name), value.primary_key());
