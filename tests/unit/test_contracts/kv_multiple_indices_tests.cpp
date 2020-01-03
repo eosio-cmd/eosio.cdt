@@ -5,18 +5,21 @@ struct my_struct {
    std::string foo;
    uint64_t bar;
    int32_t baz;
+   uint128_t i128;
 
    auto primary_key() const { return eosio::make_key(n1); }
    auto foo_key() const { return eosio::make_key(foo); }
    auto bar_key() const { return eosio::make_key(bar); }
    auto baz_key() const { return eosio::make_key(baz); }
    auto foo_i_key() const { return eosio::make_key(foo, true); }
+   auto i128_key() const { return eosio::make_key(i128); }
 
    bool operator==(const my_struct b) const {
       return n1 == b.n1 &&
              foo == b.foo &&
              bar == b.bar &&
-             baz == b.baz;
+             baz == b.baz &&
+             i128 == b.i128;
    }
 };
 
@@ -26,9 +29,10 @@ struct my_table : eosio::kv_table<my_struct> {
    eosio::kv_table<my_struct>::index bar_index{eosio::name{"bar"}, &my_struct::bar_key};
    eosio::kv_table<my_struct>::index baz_index{eosio::name{"baz"}, &my_struct::baz_key};
    eosio::kv_table<my_struct>::index ifoo_index{eosio::name{"ifoo"}, &my_struct::foo_i_key};
+   eosio::kv_table<my_struct>::index i128_index{eosio::name{"ia"}, &my_struct::i128_key};
 
    my_table() {
-      init(eosio::name{"kvtest"}, eosio::name{"table"}, &primary_index, &foo_index, &bar_index, &baz_index, &ifoo_index);
+      init(eosio::name{"kvtest"}, eosio::name{"table"}, &primary_index, &foo_index, &bar_index, &baz_index, &ifoo_index, &i128_index);
    }
 };
 
@@ -39,31 +43,36 @@ public:
       .n1 = "bob"_n,
       .foo = "a",
       .bar = 5,
-      .baz = 0
+      .baz = 0,
+      .i128 = (static_cast<uint128_t>(1) << 127) - 5
    };
    my_struct s2{
       .n1 = "alice"_n,
       .foo = "C",
       .bar = 4,
-      .baz = -1
+      .baz = -1,
+      .i128 = (static_cast<uint128_t>(1) << 127) - 4
    };
    my_struct s3{
       .n1 = "john"_n,
       .foo = "e",
       .bar = 3,
-      .baz = -2
+      .baz = -2,
+      .i128 = (static_cast<uint128_t>(1) << 127) - 3
    };
    my_struct s4{
       .n1 = "joe"_n,
       .foo = "g",
       .bar = 2,
-      .baz = 1
+      .baz = 1,
+      .i128 = (static_cast<uint128_t>(1) << 127) - 2
    };
    my_struct s5{
       .n1 = "billy"_n,
       .foo = "I",
       .bar = 1,
-      .baz = 2
+      .baz = 2,
+      .i128 = (static_cast<uint128_t>(1) << 127) - 1
    };
 
    [[eosio::action]]
@@ -112,6 +121,27 @@ public:
       itr = t.baz_index.find(-2);
       val = itr.value();
       eosio::check(val.n1 == "john"_n, "Got the wrong n1");
+   }
+
+   [[eosio::action]]
+   void findi() {
+      my_table t;
+
+      auto end_itr = t.i128_index.end();
+
+      auto itr = t.i128_index.begin();
+      eosio::check(itr != end_itr, "Should not be the end");
+      eosio::check(itr.value().i128 == s.i128, "Got the wrong value");
+      ++itr;
+      eosio::check(itr.value().i128 == s2.i128, "Got the wrong value");
+      ++itr;
+      eosio::check(itr.value().i128 == s3.i128, "Got the wrong value");
+      ++itr;
+      eosio::check(itr.value().i128 == s4.i128, "Got the wrong value");
+      ++itr;
+      eosio::check(itr.value().i128 == s5.i128, "Got the wrong value");
+      ++itr;
+      eosio::check(itr == end_itr, "Should be the end");
    }
 
    [[eosio::action]]
