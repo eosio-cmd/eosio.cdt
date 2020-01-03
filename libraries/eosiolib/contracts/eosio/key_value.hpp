@@ -288,22 +288,10 @@ public:
             return *this;
          }
 
-         iterator operator++(int) {
-            iterator copy(*this);
-            ++(*this);
-            return copy;
-         }
-
          iterator& operator--() {
             itr_stat = static_cast<kv_it_stat>(internal_use_do_not_use::kv_it_prev(itr));
             eosio::check(itr_stat != kv_it_stat::iterator_end, "incremented past the beginning");
             return *this;
-         }
-
-         iterator operator--(int) {
-            iterator copy(*this);
-            --(*this);
-            return copy;
          }
 
          bool operator==(const iterator& b) const {
@@ -316,14 +304,12 @@ public:
             return key() == b.key();
          }
 
-         bool operator!=(iterator b) {
-            if (itr_stat == kv_it_stat::iterator_end) {
-               return b.itr_stat != kv_it_stat::iterator_end;
-            }
-            if (b.itr_stat == kv_it_stat::iterator_end) {
-               return true;
-            }
-            return key() != b.key();
+         bool operator!=(const iterator& b) {
+            return !(*this == b);
+         }
+
+         bool operator<(const iterator& b) {
+            return itr < b.itr;
          }
 
       private:
@@ -420,8 +406,8 @@ public:
          return_values.push_back(begin_itr.value());
 
          iterator itr = begin_itr;
-         while(itr != end_itr){
-            itr++;
+         while(itr != end_itr) {
+            ++itr;
             return_values.push_back(itr.value());
          }
 

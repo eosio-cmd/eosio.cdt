@@ -134,45 +134,45 @@ public:
       auto itr = t.foo_index.begin();
       eosio::check(itr != end_itr, "Should not be the end");
       eosio::check(itr.value().foo == "a", "Got the wrong value");
-      itr++;
+      ++itr;
       eosio::check(itr != end_itr, "Should not be the end");
       eosio::check(itr.value().foo == "c", "Got the wrong value");
-      itr++;
+      ++itr;
       eosio::check(itr != end_itr, "Should not be the end");
       eosio::check(itr.value().foo == "e", "Got the wrong value");
-      itr++;
+      ++itr;
       eosio::check(itr != end_itr, "Should not be the end");
       eosio::check(itr.value().foo == "g", "Got the wrong value");
-      itr++;
+      ++itr;
       eosio::check(itr != end_itr, "Should not be the end");
       eosio::check(itr.value().foo == "i", "Got the wrong value");
-      itr++;
+      ++itr;
       eosio::check(itr == end_itr, "Should be the end");
 
       // operator--
       // ----------
-      itr--;
+      --itr;
       eosio::check(itr != begin_itr, "Should not be the beginning");
-      itr--;
+      --itr;
       eosio::check(itr != begin_itr, "Should not be the beginning");
-      itr--;
+      --itr;
       eosio::check(itr != begin_itr, "Should not be the beginning");
-      itr--;
+      --itr;
       eosio::check(itr != begin_itr, "Should not be the beginning");
-      itr--;
+      --itr;
       eosio::check(itr == begin_itr, "Should be the beginning");
 
       // operator int32_t
       // ----------------
       itr = t.baz_index.begin();
       eosio::check(itr.value().baz == -2, "bad 1");
-      itr++;
+      ++itr;
       eosio::check(itr.value().baz == -1, "bad 2");
-      itr++;
+      ++itr;
       eosio::check(itr.value().baz == 0, "bad 3");
-      itr++;
+      ++itr;
       eosio::check(itr.value().baz == 1, "bad 4");
-      itr++;
+      ++itr;
       eosio::check(itr.value().baz == 2, "bad 5");
    }
 
