@@ -179,18 +179,22 @@ inline key_type make_key(I val) {
    return {data_size, s};
 }
 
-inline key_type make_key(std::string val, bool case_insensitive=false) {
+inline key_type make_key(const std::string& val, bool case_insensitive=false) {
    using namespace detail;
 
+   std::string upper;
+
    if (case_insensitive) {
-      std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) -> unsigned char { return std::toupper(c); });
+      std::transform(val.begin(), val.end(), upper.begin(), [](unsigned char c) -> unsigned char { return std::toupper(c); });
+   } else {
+      upper = val;
    }
 
-   size_t data_size = pack_size(val) + 3;
+   size_t data_size = pack_size(upper) + 3;
    void* data_buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
 
    datastream<char*> data_ds((char*)data_buffer, data_size);
-   data_ds << val;
+   data_ds << upper;
 
    ((char*)data_buffer)[data_size - 3] = 0x01;
    ((char*)data_buffer)[data_size - 2] = 0x00;
