@@ -2,7 +2,6 @@
 
 struct my_struct {
    eosio::name n1;
-   eosio::name n2;
    std::string foo;
    uint64_t bar;
    int32_t baz;
@@ -15,7 +14,6 @@ struct my_struct {
 
    bool operator==(const my_struct b) const {
       return n1 == b.n1 &&
-             n2 == b.n2 &&
              foo == b.foo &&
              bar == b.bar &&
              baz == b.baz;
@@ -39,35 +37,30 @@ public:
    using contract::contract;
    my_struct s{
       .n1 = "bob"_n,
-      .n2 = "alice"_n,
       .foo = "a",
       .bar = 5,
       .baz = 0
    };
    my_struct s2{
       .n1 = "alice"_n,
-      .n2 = "bob"_n,
       .foo = "C",
       .bar = 4,
       .baz = -1
    };
    my_struct s3{
       .n1 = "john"_n,
-      .n2 = "joe"_n,
       .foo = "e",
       .bar = 3,
       .baz = -2
    };
    my_struct s4{
       .n1 = "joe"_n,
-      .n2 = "john"_n,
       .foo = "g",
       .bar = 2,
       .baz = 1
    };
    my_struct s5{
       .n1 = "billy"_n,
-      .n2 = "vincent"_n,
       .foo = "I",
       .bar = 1,
       .baz = 2
@@ -91,17 +84,14 @@ public:
       auto itr = t.primary_index.find("bob"_n);
       auto val = itr.value();
       eosio::check(val.n1 == "bob"_n, "Got the wrong n1");
-      eosio::check(val.n2 == "alice"_n, "Got the wrong n2");
 
       itr = t.foo_index.find("C");
       val = itr.value();
       eosio::check(val.n1 == "alice"_n, "Got the wrong n1");
-      eosio::check(val.n2 == "bob"_n, "Got the wrong n2");
 
       itr = t.bar_index.find((uint64_t)1);
       val = itr.value();
       eosio::check(val.n1 == "billy"_n, "Got the wrong n1");
-      eosio::check(val.n2 == "vincent"_n, "Got the wrong n2");
 
       itr = t.baz_index.find(0);
       val = itr.value();
