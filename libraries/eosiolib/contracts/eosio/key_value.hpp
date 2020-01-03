@@ -179,22 +179,17 @@ inline key_type make_key(I val) {
    return {data_size, s};
 }
 
-inline key_type make_key(const std::string& val, bool case_insensitive=false) {
+inline key_type make_key(const char* str, size_t size, bool case_insensitive=false) {
    using namespace detail;
 
-   std::string upper;
-
-   if (case_insensitive) {
-      std::transform(val.begin(), val.end(), upper.begin(), [](unsigned char c) -> unsigned char { return std::toupper(c); });
-   } else {
-      upper = val;
-   }
-
-   size_t data_size = pack_size(upper) + 3;
+   size_t data_size = size + 3;
    void* data_buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
 
-   datastream<char*> data_ds((char*)data_buffer, data_size);
-   data_ds << upper;
+   if (case_insensitive) {
+      std::transform(str, str + size, (char*)data_buffer, [](unsigned char c) -> unsigned char { return std::toupper(c); });
+   } else {
+      memcpy(data_buffer, str, size);
+   }
 
    ((char*)data_buffer)[data_size - 3] = 0x01;
    ((char*)data_buffer)[data_size - 2] = 0x00;
@@ -208,7 +203,11 @@ inline key_type make_key(const std::string& val, bool case_insensitive=false) {
    return {data_size, s};
 }
 
-inline key_type make_key(const char * str, bool case_insensitive=false) {
+inline key_type make_key(const std::string& val, bool case_insensitive=false) {
+   return make_key(val.data(), val.size(), case_insensitive);
+}
+
+inline key_type make_key(const char* str, bool case_insensitive=false) {
    return make_key(std::string{str}, case_insensitive);
 }
 
@@ -218,7 +217,6 @@ inline key_type make_key(eosio::name n) {
 
 template<typename T, eosio::name::raw DbName = eosio::name{"eosio.kvram"}>
 class kv_table {
-
    constexpr static uint64_t db = static_cast<uint64_t>(DbName);
 
    enum class kv_it_stat {
