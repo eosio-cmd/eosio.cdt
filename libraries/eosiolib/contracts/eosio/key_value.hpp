@@ -304,11 +304,11 @@ public:
             return key() == b.key();
          }
 
-         bool operator!=(const iterator& b) {
+         bool operator!=(const iterator& b) const {
             return !(*this == b);
          }
 
-         bool operator<(const iterator& b) {
+         bool operator<(const iterator& b) const {
             return itr < b.itr;
          }
 
@@ -375,13 +375,8 @@ public:
          int32_t itr_stat = internal_use_do_not_use::kv_it_lower_bound(itr, "", 0);
 
          uint32_t value_size;
-         uint64_t buffer_size = 1024*1024; // TODO:
-         void* buffer = buffer_size > detail::max_stack_buffer_size ? malloc(buffer_size) : alloca(buffer_size);
-         internal_use_do_not_use::kv_it_value(itr, 0, (char*)buffer, buffer_size, value_size);
-
-         if (buffer_size > detail::max_stack_buffer_size) {
-            free(buffer);
-         }
+         char* buffer;
+         internal_use_do_not_use::kv_it_value(itr, 0, buffer, 0, value_size);
 
          return {contract_name, itr, static_cast<kv_it_stat>(itr_stat), value_size, this};
       }
