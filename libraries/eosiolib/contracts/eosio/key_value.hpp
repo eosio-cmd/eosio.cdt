@@ -226,10 +226,10 @@ class kv_table {
    };
 
 public:
-   class index {
+   class kv_index {
       class iterator {
       public:
-         iterator(eosio::name contract_name, uint32_t itr, kv_it_stat itr_stat, size_t data_size, index* idx) :
+         iterator(eosio::name contract_name, uint32_t itr, kv_it_stat itr_stat, size_t data_size, kv_index* idx) :
                   contract_name{contract_name}, itr{itr}, itr_stat{itr_stat}, data_size{data_size}, idx{idx} {}
 
          T value() const {
@@ -312,7 +312,7 @@ public:
 
       private:
          eosio::name contract_name;
-         const index* idx;
+         const kv_index* idx;
 
          size_t data_size;
 
@@ -331,9 +331,9 @@ public:
 
       kv_table* tbl;
 
-      index() = default;
+      kv_index() = default;
 
-      index(eosio::name name, key_type (T::*key_function)() const): name{name}, key_function{key_function} {}
+      kv_index(eosio::name name, key_type (T::*key_function)() const): name{name}, key_function{key_function} {}
 
       template <typename K>
       iterator find(K key) {
@@ -434,7 +434,7 @@ public:
    }
 
    template <typename ...Indices>
-   void init(eosio::name contract, eosio::name table, index* primary, Indices... indices) {
+   void init(eosio::name contract, eosio::name table, kv_index* primary, Indices... indices) {
       contract_name = contract;
       table_name = table;
 
@@ -487,7 +487,7 @@ private:
    eosio::name contract_name;
    eosio::name table_name;
 
-   index* primary_index;
-   std::vector<index*> secondary_indices;
+   kv_index* primary_index;
+   std::vector<kv_index*> secondary_indices;
 };
 } // eosio

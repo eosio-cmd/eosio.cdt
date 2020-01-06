@@ -24,12 +24,12 @@ struct my_struct {
 };
 
 struct my_table : eosio::kv_table<my_struct> {
-   eosio::kv_table<my_struct>::index primary_index{eosio::name{"primary"}, &my_struct::primary_key};
-   eosio::kv_table<my_struct>::index foo_index{eosio::name{"foo"}, &my_struct::foo_key};
-   eosio::kv_table<my_struct>::index bar_index{eosio::name{"bar"}, &my_struct::bar_key};
-   eosio::kv_table<my_struct>::index baz_index{eosio::name{"baz"}, &my_struct::baz_key};
-   eosio::kv_table<my_struct>::index ifoo_index{eosio::name{"ifoo"}, &my_struct::foo_i_key};
-   eosio::kv_table<my_struct>::index i128_index{eosio::name{"ia"}, &my_struct::i128_key};
+   kv_index primary_index{eosio::name{"primary"}, &my_struct::primary_key};
+   kv_index foo_index{eosio::name{"foo"}, &my_struct::foo_key};
+   kv_index bar_index{eosio::name{"bar"}, &my_struct::bar_key};
+   kv_index baz_index{eosio::name{"baz"}, &my_struct::baz_key};
+   kv_index ifoo_index{eosio::name{"ifoo"}, &my_struct::foo_i_key};
+   kv_index i128_index{eosio::name{"ia"}, &my_struct::i128_key};
 
    my_table() {
       init(eosio::name{"kvtest"}, eosio::name{"table"}, &primary_index, &foo_index, &bar_index, &baz_index, &ifoo_index, &i128_index);
