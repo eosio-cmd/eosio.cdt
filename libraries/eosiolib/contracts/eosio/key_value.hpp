@@ -215,9 +215,8 @@ inline key_type make_key(eosio::name n) {
    return make_key(n.value);
 }
 
-template<typename T, eosio::name::raw DbName = eosio::name{"eosio.kvram"}>
+template<typename T, eosio::name::raw TableName, eosio::name::raw DbName = eosio::name{"eosio.kvram"}>
 class kv_table {
-   constexpr static uint64_t db = static_cast<uint64_t>(DbName);
 
    enum class kv_it_stat {
       iterator_ok     = 0,  // Iterator is positioned at a key-value pair
@@ -434,13 +433,12 @@ public:
    }
 
    template <typename ...Indices>
-   void init(eosio::name contract, eosio::name table, kv_index* primary, Indices... indices) {
+   void init(eosio::name contract, kv_index* primary, Indices... indices) {
       contract_name = contract;
-      table_name = table;
 
       primary_index = primary;
       primary_index->contract_name = contract;
-      primary_index->table_name = table;
+      primary_index->table_name = table_name;
       primary_index->tbl = this;
 
       if constexpr (sizeof...(indices) > 0) {
@@ -484,10 +482,13 @@ public:
    }
 
 private:
+   constexpr static uint64_t db = static_cast<uint64_t>(DbName);
+   constexpr static eosio::name table_name = static_cast<eosio::name>(TableName);
+
    eosio::name contract_name;
-   eosio::name table_name;
 
    kv_index* primary_index;
    std::vector<kv_index*> secondary_indices;
+
 };
 } // eosio

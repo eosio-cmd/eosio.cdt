@@ -23,7 +23,7 @@ struct my_struct {
    }
 };
 
-struct my_table : eosio::kv_table<my_struct> {
+struct my_table : eosio::kv_table<my_struct, "testtable"_n> {
    kv_index primary_index{eosio::name{"primary"}, &my_struct::primary_key};
    kv_index foo_index{eosio::name{"foo"}, &my_struct::foo_key};
    kv_index bar_index{eosio::name{"bar"}, &my_struct::bar_key};
@@ -32,7 +32,7 @@ struct my_table : eosio::kv_table<my_struct> {
    kv_index i128_index{eosio::name{"ia"}, &my_struct::i128_key};
 
    my_table() {
-      init(eosio::name{"kvtest"}, eosio::name{"table"}, &primary_index, &foo_index, &bar_index, &baz_index, &ifoo_index, &i128_index);
+      init(eosio::name{"kvtest"}, &primary_index, &foo_index, &bar_index, &baz_index, &ifoo_index, &i128_index);
    }
 };
 
