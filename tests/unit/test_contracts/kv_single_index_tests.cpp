@@ -63,11 +63,11 @@ public:
    void setup() {
       my_table t;
 
-      t.upsert(s3);
-      t.upsert(s);
-      t.upsert(s4);
-      t.upsert(s2);
-      t.upsert(s5);
+      t.put(s3);
+      t.put(s);
+      t.put(s4);
+      t.put(s2);
+      t.put(s5);
    }
 
    [[eosio::action]]

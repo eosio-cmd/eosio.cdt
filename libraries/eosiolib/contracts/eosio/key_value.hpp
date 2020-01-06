@@ -448,7 +448,7 @@ public:
       }
    }
 
-   void upsert(const T& value) {
+   void put(const T& value) {
       using namespace detail;
 
       auto t_key = table_key(make_prefix(table_name, primary_index->name), value.primary_key());
