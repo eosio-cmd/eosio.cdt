@@ -449,7 +449,7 @@ public:
    void put(const T& value) {
       using namespace detail;
 
-      auto t_key = table_key(make_prefix(table_name, primary_index->name), value.primary_key());
+      auto t_key = table_key(make_prefix(table_name, primary_index->name), primary_index->get_key(value));
 
       size_t data_size = pack_size(value);
       void* data_buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);

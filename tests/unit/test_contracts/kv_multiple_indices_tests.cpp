@@ -1,13 +1,13 @@
 #include <eosio/eosio.hpp>
 
 struct my_struct {
-   eosio::name n1;
+   eosio::name primary_key;
    std::string foo;
    uint64_t bar;
    int32_t baz;
    uint128_t i128;
 
-   auto primary_key() const { return eosio::make_key(n1); }
+   auto pk() const { return eosio::make_key(primary_key); }
    auto foo_key() const { return eosio::make_key(foo); }
    auto bar_key() const { return eosio::make_key(bar); }
    auto baz_key() const { return eosio::make_key(baz); }
@@ -15,7 +15,7 @@ struct my_struct {
    auto i128_key() const { return eosio::make_key(i128); }
 
    bool operator==(const my_struct b) const {
-      return n1 == b.n1 &&
+      return primary_key == b.primary_key &&
              foo == b.foo &&
              bar == b.bar &&
              baz == b.baz &&
@@ -24,7 +24,7 @@ struct my_struct {
 };
 
 struct my_table : eosio::kv_table<my_struct, "testtable"_n> {
-   kv_index primary_index{eosio::name{"primary"}, &my_struct::primary_key};
+   kv_index primary_index{eosio::name{"primary"}, &my_struct::pk};
    kv_index foo_index{eosio::name{"foo"}, &my_struct::foo_key};
    kv_index bar_index{eosio::name{"bar"}, &my_struct::bar_key};
    kv_index baz_index{eosio::name{"baz"}, &my_struct::baz_key};
@@ -40,35 +40,35 @@ class [[eosio::contract]] kv_multiple_indices_tests : public eosio::contract {
 public:
    using contract::contract;
    my_struct s{
-      .n1 = "bob"_n,
+      .primary_key = "bob"_n,
       .foo = "a",
       .bar = 5,
       .baz = 0,
       .i128 = (static_cast<uint128_t>(1) << 127) - 5
    };
    my_struct s2{
-      .n1 = "alice"_n,
+      .primary_key = "alice"_n,
       .foo = "C",
       .bar = 4,
       .baz = -1,
       .i128 = (static_cast<uint128_t>(1) << 127) - 4
    };
    my_struct s3{
-      .n1 = "john"_n,
+      .primary_key = "john"_n,
       .foo = "e",
       .bar = 3,
       .baz = -2,
       .i128 = (static_cast<uint128_t>(1) << 127) - 3
    };
    my_struct s4{
-      .n1 = "joe"_n,
+      .primary_key = "joe"_n,
       .foo = "g",
       .bar = 2,
       .baz = 1,
       .i128 = (static_cast<uint128_t>(1) << 127) - 2
    };
    my_struct s5{
-      .n1 = "billy"_n,
+      .primary_key = "billy"_n,
       .foo = "I",
       .bar = 1,
       .baz = 2,
@@ -92,35 +92,35 @@ public:
 
       auto itr = t.primary_index.find("bob"_n);
       auto val = itr.value();
-      eosio::check(val.n1 == "bob"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "bob"_n, "Got the wrong primary_key");
 
       itr = t.foo_index.find("C");
       val = itr.value();
-      eosio::check(val.n1 == "alice"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "alice"_n, "Got the wrong primary_key");
 
       itr = t.bar_index.find((uint64_t)1);
       val = itr.value();
-      eosio::check(val.n1 == "billy"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "billy"_n, "Got the wrong primary_key");
 
       itr = t.baz_index.find(0);
       val = itr.value();
-      eosio::check(val.n1 == "bob"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "bob"_n, "Got the wrong primary_key");
 
       itr = t.baz_index.find(-1);
       val = itr.value();
-      eosio::check(val.n1 == "alice"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "alice"_n, "Got the wrong primary_key");
 
       itr = t.baz_index.find(2);
       val = itr.value();
-      eosio::check(val.n1 == "billy"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "billy"_n, "Got the wrong primary_key");
 
       itr = t.baz_index.find(1);
       val = itr.value();
-      eosio::check(val.n1 == "joe"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "joe"_n, "Got the wrong primary_key");
 
       itr = t.baz_index.find(-2);
       val = itr.value();
-      eosio::check(val.n1 == "john"_n, "Got the wrong n1");
+      eosio::check(val.primary_key == "john"_n, "Got the wrong primary_key");
    }
 
    [[eosio::action]]
