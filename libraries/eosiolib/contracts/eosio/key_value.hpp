@@ -332,6 +332,13 @@ public:
 
       kv_index() = default;
 
+      template <typename KF>
+      kv_index(eosio::name name, KF T::*key_field): name{name} {
+         key_field_function = [=](T t) {
+            return make_key(t.*key_field);
+         };
+      }
+
       kv_index(eosio::name name, key_type (T::*key_function)() const): name{name}, key_function{key_function} {}
 
       template <typename K>
@@ -407,11 +414,16 @@ public:
       }
 
       key_type get_key(T t) const {
-         return (t.*key_function)(); 
+         if (key_function) {
+            return (t.*key_function)();
+         } else {
+            return key_field_function(t);
+         }
       }
 
    private:
       key_type (T::*key_function)() const;
+      std::function<key_type(T)> key_field_function;
    };
 
    template<typename I, typename ...Indices>

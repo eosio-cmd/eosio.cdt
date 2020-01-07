@@ -24,7 +24,7 @@ struct my_struct {
 };
 
 struct my_table : eosio::kv_table<my_struct, "testtable"_n> {
-   kv_index primary_index{eosio::name{"primary"}, &my_struct::pk};
+   kv_index primary_index{eosio::name{"primary"}, &my_struct::primary_key};
    kv_index foo_index{eosio::name{"foo"}, &my_struct::foo_key};
    kv_index bar_index{eosio::name{"bar"}, &my_struct::bar_key};
    kv_index baz_index{eosio::name{"baz"}, &my_struct::baz_key};
