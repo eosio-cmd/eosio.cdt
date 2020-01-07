@@ -9,7 +9,7 @@ CONTRACT_NAME=""
 
 def main():
 
-    contracts = ["testkv"]
+    contracts = ["kvtest"]
     #contracts = ["kvtest", "testkv"]
     for c in contracts:
         global CONTRACT_NAME
@@ -34,11 +34,11 @@ def main():
             run()
 
 def build():
-    subprocess.run(["eosio-cpp", CONTRACT_NAME+".cpp"])
+    subprocess.run(["eosio-cpp", "kv_multiple_indices_tests.cpp"])
 
 def deploy():
-    subprocess.run(["cleos", "set", "abi", CONTRACT_NAME, CONTRACT_NAME+".abi"])
-    subprocess.run(["cleos", "set", "code", CONTRACT_NAME, CONTRACT_NAME+".wasm"])
+    subprocess.run(["cleos", "set", "abi", CONTRACT_NAME, "kv_multiple_indices_tests.abi"])
+    subprocess.run(["cleos", "set", "code", CONTRACT_NAME, "kv_multiple_indices_tests.wasm"])
 
 def run():
     args = (
