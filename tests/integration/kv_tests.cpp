@@ -9,6 +9,7 @@ using namespace eosio::testing;
 
 BOOST_AUTO_TEST_SUITE(key_value_tests)
 
+#if 0
 BOOST_FIXTURE_TEST_CASE(single_tests_find, tester) try {
     create_accounts( { N(kvtest) } );
     produce_block();
@@ -59,9 +60,11 @@ BOOST_FIXTURE_TEST_CASE(single_tests_erase, tester) try {
     push_action(N(kvtest), N(setup), N(kvtest), {});
     push_action(N(kvtest), N(erase), N(kvtest), {});
 } FC_LOG_AND_RETHROW()
+#endif
 
 // Multi
 // -----
+#if 0
 BOOST_FIXTURE_TEST_CASE(multi_tests_find, tester) try {
     create_accounts( { N(kvtest) } );
     produce_block();
@@ -81,7 +84,7 @@ BOOST_FIXTURE_TEST_CASE(multi_tests_find_i128, tester) try {
     produce_blocks();
 
     push_action(N(kvtest), N(setup), N(kvtest), {});
-    push_action(N(kvtest), N(findi), N(kvtest), {});
+    // push_action(N(kvtest), N(findi), N(kvtest), {});
 } FC_LOG_AND_RETHROW()
 
 BOOST_FIXTURE_TEST_CASE(multi_tests_iteration, tester) try {
@@ -116,4 +119,66 @@ BOOST_FIXTURE_TEST_CASE(multi_tests_range, tester) try {
     push_action(N(kvtest), N(setup), N(kvtest), {});
     push_action(N(kvtest), N(range), N(kvtest), {});
 } FC_LOG_AND_RETHROW()
+#endif
+
+// Multi New
+// -----
+BOOST_FIXTURE_TEST_CASE(multi_tests_find_new, tester) try {
+    create_accounts( { N(kvtest) } );
+    produce_block();
+    set_code( N(kvtest), contracts::kv_multi_tests_wasm() );
+    set_abi( N(kvtest), contracts::kv_multi_tests_abi().data() );
+    produce_blocks();
+
+    push_action(N(kvtest), N(setup2), N(kvtest), {});
+    push_action(N(kvtest), N(find2), N(kvtest), {});
+} FC_LOG_AND_RETHROW()
+
+#if 0
+BOOST_FIXTURE_TEST_CASE(multi_tests_find_i128, tester) try {
+    create_accounts( { N(kvtest) } );
+    produce_block();
+    set_code( N(kvtest), contracts::kv_multi_tests_wasm() );
+    set_abi( N(kvtest), contracts::kv_multi_tests_abi().data() );
+    produce_blocks();
+
+    push_action(N(kvtest), N(setup), N(kvtest), {});
+    // push_action(N(kvtest), N(findi), N(kvtest), {});
+} FC_LOG_AND_RETHROW()
+#endif
+
+#if 0
+BOOST_FIXTURE_TEST_CASE(multi_tests_iteration, tester) try {
+    create_accounts( { N(kvtest) } );
+    produce_block();
+    set_code( N(kvtest), contracts::kv_multi_tests_wasm() );
+    set_abi( N(kvtest), contracts::kv_multi_tests_abi().data() );
+    produce_blocks();
+
+    push_action(N(kvtest), N(setup), N(kvtest), {});
+    push_action(N(kvtest), N(iteration), N(kvtest), {});
+} FC_LOG_AND_RETHROW()
+
+BOOST_FIXTURE_TEST_CASE(multi_tests_iteration_insensitive, tester) try {
+    create_accounts( { N(kvtest) } );
+    produce_block();
+    set_code( N(kvtest), contracts::kv_multi_tests_wasm() );
+    set_abi( N(kvtest), contracts::kv_multi_tests_abi().data() );
+    produce_blocks();
+
+    push_action(N(kvtest), N(setup), N(kvtest), {});
+    push_action(N(kvtest), N(iterationi), N(kvtest), {});
+} FC_LOG_AND_RETHROW()
+
+BOOST_FIXTURE_TEST_CASE(multi_tests_range, tester) try {
+    create_accounts( { N(kvtest) } );
+    produce_block();
+    set_code( N(kvtest), contracts::kv_multi_tests_wasm() );
+    set_abi( N(kvtest), contracts::kv_multi_tests_abi().data() );
+    produce_blocks();
+
+    push_action(N(kvtest), N(setup), N(kvtest), {});
+    push_action(N(kvtest), N(range), N(kvtest), {});
+} FC_LOG_AND_RETHROW()
+#endif
 }

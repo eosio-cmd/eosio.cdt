@@ -7,10 +7,6 @@ struct my_struct {
    int32_t baz;
    uint128_t i128;
 
-   auto pk() const { return eosio::make_key(primary_key); }
-   auto foo_key() const { return eosio::make_key(foo); }
-   auto bar_key() const { return eosio::make_key(bar); }
-   auto baz_key() const { return eosio::make_key(baz); }
    auto foo_i_key() const { return eosio::make_key(foo, true); }
    auto i128_key() const { return eosio::make_key(i128); }
 
@@ -23,17 +19,36 @@ struct my_struct {
    }
 };
 
-struct my_table : eosio::kv_table<my_struct, "testtable"_n> {
+#if 0
+struct my_table : eosio::kv_table<my_table, my_struct, "testtable"_n> {
    kv_index primary_index{eosio::name{"primary"}, &my_struct::primary_key};
-   kv_index foo_index{eosio::name{"foo"}, &my_struct::foo_key};
-   kv_index bar_index{eosio::name{"bar"}, &my_struct::bar_key};
-   kv_index baz_index{eosio::name{"baz"}, &my_struct::baz_key};
+   kv_index foo_index{eosio::name{"foo"}, &my_struct::foo};
+   kv_index bar_index{eosio::name{"bar"}, &my_struct::bar};
+   kv_index baz_index{eosio::name{"baz"}, &my_struct::baz};
    kv_index ifoo_index{eosio::name{"ifoo"}, &my_struct::foo_i_key};
    kv_index i128_index{eosio::name{"ia"}, &my_struct::i128_key};
 
    my_table() {
       init(eosio::name{"kvtest"}, &primary_index, &foo_index, &bar_index, &baz_index, &ifoo_index, &i128_index);
    }
+};
+#endif
+
+struct my_table_2 : eosio::kv_table<my_table_2, my_struct, "testtable"_n> {
+   struct {
+      kv_index primary{eosio::name{"primary"}, &my_struct::primary_key};
+      kv_index foo{eosio::name{"foo"}, &my_struct::foo};
+      kv_index bar{eosio::name{"bar"}, &my_struct::bar};
+      kv_index baz{eosio::name{"baz"}, &my_struct::baz};
+      kv_index ifoo{eosio::name{"ifoo"}, &my_struct::foo_i_key};
+      kv_index i128{eosio::name{"ia"}, &my_struct::i128_key};
+   } index;
+
+   /*
+   my_table_2() {
+      init(eosio::name{"kvtest"}, &index.primary, &index.foo, &index.bar, &index.baz, &index.ifoo, &index.i128);
+   }
+   */
 };
 
 class [[eosio::contract]] kv_multiple_indices_tests : public eosio::contract {
@@ -75,6 +90,7 @@ public:
       .i128 = (static_cast<uint128_t>(1) << 127) - 1
    };
 
+#if 0
    [[eosio::action]]
    void setup() {
       my_table t;
@@ -85,7 +101,20 @@ public:
       t.put(s4);
       t.put(s5);
    }
+#endif
 
+   [[eosio::action]]
+   void setup2() {
+      auto t = my_table_2::open(get_self());
+
+      t.put(s);
+      t.put(s2);
+      t.put(s3);
+      t.put(s4);
+      t.put(s5);
+   }
+
+#if 0
    [[eosio::action]]
    void find() {
       my_table t;
@@ -122,7 +151,46 @@ public:
       val = itr.value();
       eosio::check(val.primary_key == "john"_n, "Got the wrong primary_key");
    }
+#endif
 
+   [[eosio::action]]
+   void find2() {
+      auto t = my_table_2::open(get_self());
+
+      auto itr = t.index.primary.find("bob"_n);
+      auto val = itr.value();
+      eosio::check(val.primary_key == "bob"_n, "Got the wrong primary_key");
+
+      itr = t.index.foo.find("C");
+      val = itr.value();
+      eosio::check(val.primary_key == "alice"_n, "Got the wrong primary_key");
+
+      itr = t.index.bar.find((uint64_t)1);
+      val = itr.value();
+      eosio::check(val.primary_key == "billy"_n, "Got the wrong primary_key");
+
+      itr = t.index.baz.find(0);
+      val = itr.value();
+      eosio::check(val.primary_key == "bob"_n, "Got the wrong primary_key");
+
+      itr = t.index.baz.find(-1);
+      val = itr.value();
+      eosio::check(val.primary_key == "alice"_n, "Got the wrong primary_key");
+
+      itr = t.index.baz.find(2);
+      val = itr.value();
+      eosio::check(val.primary_key == "billy"_n, "Got the wrong primary_key");
+
+      itr = t.index.baz.find(1);
+      val = itr.value();
+      eosio::check(val.primary_key == "joe"_n, "Got the wrong primary_key");
+
+      itr = t.index.baz.find(-2);
+      val = itr.value();
+      eosio::check(val.primary_key == "john"_n, "Got the wrong primary_key");
+   }
+
+#if 0
    [[eosio::action]]
    void findi() {
       my_table t;
@@ -245,4 +313,5 @@ public:
       vals = t.bar_index.range(e, e);
       eosio::check(vals == expected, "range did not return expected vector");
    }
+#endif
 };

@@ -7,6 +7,8 @@
 #include <cctype>
 #include <functional>
 
+#include <boost/pfr.hpp>
+
 namespace eosio {
    namespace internal_use_do_not_use {
       extern "C" {
@@ -215,7 +217,7 @@ inline key_type make_key(eosio::name n) {
    return make_key(n.value);
 }
 
-template<typename T, eosio::name::raw TableName, eosio::name::raw DbName = eosio::name{"eosio.kvram"}>
+template<typename Class, typename T, eosio::name::raw TableName, eosio::name::raw DbName = eosio::name{"eosio.kvram"}>
 class kv_table {
 
    enum class kv_it_stat {
@@ -334,8 +336,11 @@ public:
 
       template <typename KF>
       kv_index(eosio::name name, KF T::*key_field): name{name} {
-         key_field_function = [=](T t) {
-            return make_key(t.*key_field);
+         key_field_function = [=](const T& t) {
+            eosio::print_f("closure\n");
+            auto val = make_key(t.*key_field);
+            // eosio::print_f("val\n");
+            return val;
          };
       }
 
@@ -413,10 +418,13 @@ public:
          return return_values;
       }
 
-      key_type get_key(T t) const {
+      key_type get_key(const T& t) const {
+         eosio::print_f("get_key\n");
          if (key_function) {
+            eosio::print_f("key_function\n");
             return (t.*key_function)();
          } else {
+            eosio::print_f("key_field_function\n");
             return key_field_function(t);
          }
       }
@@ -426,6 +434,7 @@ public:
       std::function<key_type(T)> key_field_function;
    };
 
+   /*
    template<typename I, typename ...Indices>
    void setup_indices(I index, Indices... indices) {
       index->contract_name = contract_name;
@@ -457,11 +466,61 @@ public:
          setup_indices(indices...);
       }
    }
+   */
+
+   /*
+   void init(eosio::name contract, kv_index* primary, std::vector<kv_index*> si) {
+      contract_name = contract;
+
+      primary_index = primary;
+      primary_index->contract_name = contract;
+      primary_index->table_name = table_name;
+      primary_index->tbl = this;
+
+      secondary_indices = si;
+
+      for (auto& idx : secondary_indices) {
+         idx->contract_name = contract;
+         idx->table_name = table_name;
+         idx->tbl = this;
+      }
+   }
+   */
+
+   template <typename Indices>
+   void init(eosio::name contract, Indices indices) {
+      contract_name = contract;
+
+      auto& primary = boost::pfr::get<0>(indices);
+
+      primary_index = &primary;
+      primary_index->contract_name = contract_name;
+      primary_index->table_name = table_name;
+      primary_index->tbl = this;
+
+      eosio::print_f("kv_index size: %\n", sizeof(kv_index));
+      eosio::print_f("kv_index align: %\n", alignof(kv_index));
+      eosio::print_f("foo address: %\n", (uint32_t)((void*)&indices.foo));
+
+      boost::pfr::for_each_field(indices, [&](auto& idx) {
+         if (idx.name != primary.name) { // TODO:
+            kv_index* si = &idx;
+            eosio::print_f("pfr address: %\n", (uint32_t)((void*)si));
+            si->contract_name = contract_name;
+            si->table_name = table_name;
+            si->tbl = this;
+            secondary_indices.push_back(si);
+         }
+      });
+   }
 
    void put(const T& value) {
       using namespace detail;
 
-      auto t_key = table_key(make_prefix(table_name, primary_index->name), primary_index->get_key(value));
+      // eosio::print_f("put %\n", value.primary_key);
+
+      auto prefix = make_prefix(table_name, primary_index->name);
+      auto t_key = table_key(prefix, primary_index->get_key(value));
 
       size_t data_size = pack_size(value);
       void* data_buffer = data_size > detail::max_stack_buffer_size ? malloc(data_size) : alloca(data_size);
@@ -491,6 +550,32 @@ public:
          auto skey = table_key(make_prefix(table_name, idx->name), idx->get_key(val));
          internal_use_do_not_use::kv_erase(db, contract_name.value, (const char*)skey.buffer.data(), skey.size);
       }
+   }
+
+   /*
+   template <typename Class>
+   static Class open(eosio::name contract_name) {
+      Class c;
+      std::vector<kv_index*> si;
+
+      auto num_indices = sizeof(c.index) / sizeof(kv_index);
+
+      auto primary = boost::pfr::get<0>(c.index);
+      boost::pfr::for_each_field(c.index, [&](auto& idx) {
+         if (idx.name != primary.name) { // TODO:
+            si.push_back(&idx);
+         }
+      });
+
+      c.init(contract_name, &primary, si);
+      return c;
+   }
+   */
+
+   static Class open(eosio::name contract_name) {
+      Class c;
+      c.init(contract_name, c.index);
+      return c;
    }
 
 private:
