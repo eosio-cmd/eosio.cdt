@@ -2,6 +2,7 @@
 #include "../../core/eosio/datastream.hpp"
 #include "../../core/eosio/name.hpp"
 #include "../../core/eosio/print.hpp"
+#include "../../core/eosio/utility.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -89,18 +90,19 @@ The key-value store could provide a lexicographical ordering of uint8_t on the k
             NaN's and inf's end up with an unusual ordering
    [ ] - struct or tuple: transform each field in order. Concatenate results. (use tuples for composite keys)
 */
-
+/*
 template <typename T>
 inline T swap_endian(T u) {
-    static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");
-
-    union
-    {
-        T u;
-        unsigned char u8[sizeof(T)];
+   union {
+     T value;
+     unsigned char bytes[sizeof(T)];
     } source, dest;
 
-    source.u = u;
+    source.value = u;
+   if constexpr (sizeof(T) == 2) {
+   }
+    static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");
+
 
     for (size_t k = 0; k < sizeof(T); k++) {
         dest.u8[k] = source.u8[sizeof(T) - k - 1];
@@ -108,6 +110,7 @@ inline T swap_endian(T u) {
 
     return dest.u;
 }
+*/
 
 inline key_type make_prefix(eosio::name table_name, eosio::name index_name, uint8_t status = 1) {
    using namespace detail;
@@ -158,7 +161,7 @@ inline I flip_msb(I val) {
 }
 
 template <typename I>
-inline key_type make_key(I val) {
+inline key_type make_key(I&& val) {
    using namespace detail;
 
    if (std::is_signed<I>::value) {
@@ -216,6 +219,8 @@ inline key_type make_key(const char* str, bool case_insensitive=false) {
 inline key_type make_key(eosio::name n) {
    return make_key(n.value);
 }
+
+inline key_type make_key(key_type&& kt) { return std::move(kt); }
 
 template<typename Class, typename T, eosio::name::raw TableName, eosio::name::raw DbName = eosio::name{"eosio.kvram"}>
 class kv_table {
@@ -335,19 +340,14 @@ public:
       kv_index() = default;
 
       template <typename KF>
-      kv_index(eosio::name name, KF T::*key_field): name{name} {
-         key_field_function = [=](const T& t) {
-            eosio::print_f("closure\n");
-            auto val = make_key(t.*key_field);
-            // eosio::print_f("val\n");
-            return val;
-         };
+      kv_index(eosio::name name, KF&& kf): name{name} {
+         key_function = [&](const T& t) { return make_key(std::invoke(kf, &t)); };
       }
 
-      kv_index(eosio::name name, key_type (T::*key_function)() const): name{name}, key_function{key_function} {}
+      //kv_index(eosio::name name, key_type (T::*key_function)() const): name{name}, key_function{key_function} {}
 
       template <typename K>
-      iterator find(K key) {
+      iterator find(K&& key) {
          uint32_t value_size;
 
          auto prefix = make_prefix(table_name, name);
@@ -391,7 +391,7 @@ public:
       }
 
       template <typename K>
-      std::vector<T> range(K begin, K end) {
+      std::vector<T> range(K&& begin, K&& end) {
          eosio::check(begin <= end, "Beginning of range should be less than or equal to end");
 
          if (begin == end) {
@@ -417,21 +417,22 @@ public:
 
          return return_values;
       }
-
-      key_type get_key(const T& t) const {
-         eosio::print_f("get_key\n");
-         if (key_function) {
-            eosio::print_f("key_function\n");
-            return (t.*key_function)();
-         } else {
-            eosio::print_f("key_field_function\n");
-            return key_field_function(t);
-         }
+#if 0
+      namespace detail {
+         template <typename R, typename Cls>
+         struct class_from_member {
+            class_from_member(R Cls::*) {}
+            using type = Cls;
+         };
+         template <auto F>
+         using class_from_member_t = typename decltype(class_from_member(F))::type;
       }
+#endif
+
+      key_type get_key(const T& inst) const { return key_function(inst); }
 
    private:
-      key_type (T::*key_function)() const;
-      std::function<key_type(T)> key_field_function;
+      std::function<key_type(const T&)> key_function;
    };
 
    /*
@@ -533,7 +534,7 @@ public:
          auto st_key = table_key(make_prefix(table_name, idx->name), idx->get_key(value));
          internal_use_do_not_use::kv_set(db, contract_name.value, st_key.buffer.data(), st_key.size, t_key.buffer.data(), t_key.size);
       }
-      
+
       if (data_size > detail::max_stack_buffer_size) {
          free(data_buffer);
       }
